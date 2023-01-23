@@ -2,14 +2,22 @@
 
 class Github {
   constructor() {
-    this.clientId = 'd9308aacf8b204d361fd';
-    this.clientSecret = '84969aeef73956f4ec9e8716d1840532802bb81b';
+    this.clientId = 'ef71f8b813962bf9cf27';
+    this.clientSecret = '7c80df143bdb8d297a0f3aeb8d651f443dfae729';
   }
 
   async getUser(userName) {
     const data = await fetch(`https://api.github.com/users/${userName}?client_id=${this.clientId}&client_secret=${this.clientSecret}`);
     const profile = await data.json();
+    console.log(profile);
     return profile;
+  }
+
+  async getUsersRepos(userName) {
+    const data = await fetch(`https://api.github.com/users/${userName}/repos?sort=created&direction=desc&per_page=5&page=1?client_id=${this.clientId}&client_secret=${this.clientSecret}`);
+    const repos = await data.json();
+    console.log(repos);
+    return repos;
   }
 
 }
@@ -43,7 +51,9 @@ class UI {
         </div>
       </div>
       <h3 class="page-heading mb-3">Latest Repos</h3>
-      <div class="repos"></div>
+      <div class="repos">
+       
+      </div>
     `
   }
 
@@ -76,21 +86,41 @@ class UI {
 const github = new Github;
 const ui = new UI;
 
+const debounce = (fn, delay=500) => {
+    let timeoutId;
+
+    return (...args) => {
+        // cancel the previous timer
+        if (timeoutId) {
+            clearTimeout(timeoutId);
+        }
+        // setup a new timer
+        timeoutId = setTimeout(() => {
+            fn.apply(null, args);
+        }, delay);
+    };
+};
+
 const searchUser = document.querySelector('.searchUser');
+
+const getUser = debounce((userText) => {
+  github.getUser(userText)
+    .then (github.getUsersRepos(userText))
+    .then(data => {
+	  if(data.message === 'Not Found') {
+	  // показувати помилку
+	  ui.showAlert('User not found', 'alert alert-danger');
+	  } else {
+	  ui.showProfile(data);
+	  }
+    });
+});
 
 searchUser.addEventListener('keyup', (e) => {
   const userText = e.target.value;
 
   if(userText.trim() !== '') {
-    github.getUser(userText)
-      .then(data => {
-        if(data.message === 'Not Found') {
-          // показувати помилку
-          ui.showAlert('User not found', 'alert alert-danger');
-        } else {
-          ui.showProfile(data);
-        }
-      })
+    getUser(userText);
   } else {
     // очистити інпут пошуку
     ui.clearProfile();
