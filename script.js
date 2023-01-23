@@ -9,14 +9,17 @@ class Github {
   async getUser(userName) {
     const data = await fetch(`https://api.github.com/users/${userName}?client_id=${this.clientId}&client_secret=${this.clientSecret}`);
     const profile = await data.json();
-    console.log(profile);
     return profile;
   }
 
   async getUsersRepos(userName) {
     const data = await fetch(`https://api.github.com/users/${userName}/repos?sort=created&direction=desc&per_page=5&page=1?client_id=${this.clientId}&client_secret=${this.clientSecret}`);
     const repos = await data.json();
-    console.log(repos);
+    repos.forEach((repo) => {
+      console.log(repo.name);
+      console.log(repo.url);
+      console.log(repo.pushed_at);
+    });
     return repos;
   }
 
@@ -52,7 +55,13 @@ class UI {
       </div>
       <h3 class="page-heading mb-3">Latest Repos</h3>
       <div class="repos">
-       
+        <ul class="list-group">
+          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
+          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
+          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
+          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
+          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
+        </ul>     
       </div>
     `
   }
