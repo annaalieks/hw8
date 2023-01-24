@@ -15,11 +15,6 @@ class Github {
   async getUsersRepos(userName) {
     const data = await fetch(`https://api.github.com/users/${userName}/repos?sort=created&direction=desc&per_page=5&page=1?client_id=${this.clientId}&client_secret=${this.clientSecret}`);
     const repos = await data.json();
-    repos.forEach((repo) => {
-      console.log(repo.name);
-      console.log(repo.url);
-      console.log(repo.pushed_at);
-    });
     return repos;
   }
 
@@ -30,7 +25,17 @@ class UI {
     this.profile = document.querySelector('.profile');
   }
 
-  showProfile(user) {
+  showProfile(user, repos) {
+
+    const listItems = repos.map((repo) => {
+      const li = document.createElement("li");
+      li.classList.add('list-group-item');
+      li.innerHTML = `<strong>NAME</strong>: ${repo.name} </br> <strong>URL</strong>: ${repo.url}</br> <strong>DATE</strong>: ${repo.pushed_at}.`;
+      return li.outerHTML;
+    });
+
+    const repoListItems = listItems.join('\n');
+
     this.profile.innerHTML = `
       <div class="card card-body mb-3">
         <div class="row">
@@ -56,11 +61,7 @@ class UI {
       <h3 class="page-heading mb-3">Latest Repos</h3>
       <div class="repos">
         <ul class="list-group">
-          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
-          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
-          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
-          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
-          <li class="list-group-item">Name: ${repo.name}, url: ${repo.url}, date: ${repo.pushed_at}.</li>
+          ${repoListItems}
         </ul>     
       </div>
     `
@@ -112,17 +113,13 @@ const debounce = (fn, delay=500) => {
 
 const searchUser = document.querySelector('.searchUser');
 
-const getUser = debounce((userText) => {
-  github.getUser(userText)
-    .then (github.getUsersRepos(userText))
-    .then(data => {
-	  if(data.message === 'Not Found') {
-	  // показувати помилку
-	  ui.showAlert('User not found', 'alert alert-danger');
-	  } else {
-	  ui.showProfile(data);
-	  }
-    });
+const getUser = debounce(async (userText) => {
+  const [user, repos] = await Promise.all([github.getUser(userText), github.getUsersRepos(userText)]);
+  if (user.message === 'Not Found') {
+    ui.showAlert('User not found', 'alert alert-danger');
+  } else {
+    ui.showProfile(user, repos);
+  }
 });
 
 searchUser.addEventListener('keyup', (e) => {
